@@ -1,0 +1,54 @@
+version: "3.7"
+
+volumes:
+  peer1.orgE.example.com:
+
+networks:
+  fabric-network:
+    external: true
+
+services:
+  peer1.orgE.example.com:
+    container_name: peer1.orgE.example.com
+    extends:
+      file: ../base/peer-base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer1.orgE.example.com
+      - CORE_PEER_ADDRESS=peer1.orgE.example.com:8051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:8051
+      - CORE_PEER_CHAINCODEADDRESS=peer1.orgE.example.com:7052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.orgE.example.com:7051 peer1.orgE.example.com:8051 peer2.orgE.example.com:9051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.orgE.example.com:8051
+      - CORE_PEER_LOCALMSPID=OrgEMSP
+      - CORE_CHAINCODE_LOGGING_LEVEL=DEBUG
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=peer1.orgE.example.com.couchdb:5984
+    volumes:
+      - /var/run/:/host/var/run/
+      - ../organizations/peerOrganizations/orgE.example.com/peers/peer1.orgE.example.com/msp:/etc/hyperledger/fabric/msp
+      - ../organizations/peerOrganizations/orgE.example.com/peers/peer1.orgE.example.com/tls:/etc/hyperledger/fabric/tls
+      - peer1.orgE.example.com:/var/hyperledger/production
+    ports:
+      - 8051:8051
+    networks:
+      - fabric-network
+    depends_on:
+      - peer1.orgE.example.com.couchdb
+
+  peer1.orgE.example.com.couchdb:
+    container_name: peer1.orgE.example.com.couchdb
+    image: hyperledger/fabric-couchdb
+    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
+    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=adminpw
+    ports:
+      - 6984:5984
+        #command: bash -c "curl -X PUT http://localhost:5984/_users"
+    networks:
+      - fabric-network

@@ -1,0 +1,54 @@
+version: "2"
+
+volumes:
+  peer0.orgX.example.com:
+
+networks:
+  fabric-network:
+    external: true
+
+services:
+  peer0.orgX.example.com:
+    container_name: peer0.orgX.example.com
+    extends:
+      file: ../base/peer-base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer0.orgX.example.com
+      - CORE_PEER_ADDRESS=peer0.orgX.example.com:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.orgX.example.com:7052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.orgX.example.com:7051 peer1.orgX.example.com:8051 peer2.orgX.example.com:9051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.orgX.example.com:7051
+      - CORE_PEER_LOCALMSPID=OrgXMSP
+      - CORE_CHAINCODE_LOGGING_LEVEL=DEBUG
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=peer0.orgX.example.com.couchdb:5984
+    volumes:
+      - /var/run/:/host/var/run/
+      - ../organizations/peerOrganizations/orgX.example.com/peers/peer0.orgX.example.com/msp:/etc/hyperledger/fabric/msp
+      - ../organizations/peerOrganizations/orgX.example.com/peers/peer0.orgX.example.com/tls:/etc/hyperledger/fabric/tls
+      - peer0.orgX.example.com:/var/hyperledger/production
+    ports:
+      - 7051:7051
+    networks:
+      - fabric-network
+    depends_on:
+      - peer0.orgX.example.com.couchdb
+
+  peer0.orgX.example.com.couchdb:
+    container_name: peer0.orgX.example.com.couchdb
+    image: hyperledger/fabric-couchdb
+    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
+    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=adminpw
+    ports:
+      - 5984:5984
+        #command: bash -c "curl -X PUT http://localhost:5984/_users"
+    networks:
+      - fabric-network
